@@ -1,0 +1,231 @@
+:root {
+  --字: #1f2a30;
+  --淡字: #55636b;
+  --卡底: rgba(255, 255, 255, .93);
+  --邊: rgba(31, 42, 48, .12);
+  --期色: #8d5a2b;
+  --期淺: #f6ede3;
+  --頂高: 64px;
+  font-family: "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; color: var(--字); }
+body { background: linear-gradient(180deg, #a9d8ff 0%, #d9efff 45%, #f6f1e4 100%); }
+button { font: inherit; cursor: pointer; }
+
+/* ── 3D 舞台 ── */
+#舞台區 { position: fixed; inset: 0; }
+#畫布 { width: 100%; height: 100%; display: block; touch-action: none; }
+#標籤層 { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#無3D { position: absolute; right: 300px; top: 45%; max-width: 360px; background: #fff; padding: 18px; border-radius: 14px; font-size: 20px; }
+
+/* ── 頂列 ── */
+#頂列 { position: fixed; left: 0; right: 0; top: 0; height: var(--頂高); display: flex; align-items: center; gap: 12px; padding: 0 14px;
+  background: rgba(255, 255, 255, .88); backdrop-filter: blur(6px); box-shadow: 0 2px 10px rgba(0, 0, 0, .12); z-index: 30; }
+.品牌 { font-size: 22px; font-weight: 900; white-space: nowrap; display: flex; flex-direction: column; line-height: 1.1; }
+.品牌 small { font-size: 12px; font-weight: 600; color: var(--淡字); }
+#時期列 { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; padding: 4px 0; }
+.時期鈕 { border: 3px solid var(--c); background: #fff; color: var(--c); border-radius: 12px; padding: 4px 12px; font-weight: 900; font-size: 17px; white-space: nowrap; display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+.時期鈕 small { font-size: 11px; font-weight: 600; }
+.時期鈕.選 { background: var(--c); color: #fff; }
+.時期鈕 .星 { font-size: 11px; }
+.工具列 { display: flex; gap: 6px; }
+.工具列 button, .手機鈕 { border: 0; background: #eef3f6; border-radius: 10px; padding: 8px 10px; font-size: 15px; font-weight: 700; white-space: nowrap; }
+.工具列 button:hover { background: #dfe9ef; }
+#鈕朗讀.關 { background: #ffe0b2; }
+
+/* ── 資訊卡 ── */
+#資訊卡 { position: fixed; left: 12px; top: calc(var(--頂高) + 12px); bottom: 12px; width: 440px; overflow-y: auto; z-index: 20;
+  background: var(--卡底); border-radius: 18px; box-shadow: 0 8px 28px rgba(0, 0, 0, .18); padding: 18px 20px 22px; transition: transform .35s; border-top: 8px solid var(--期色); }
+body.收起 #資訊卡 { transform: translateX(-470px); }
+.收合鈕 { position: fixed; left: 456px; top: calc(var(--頂高) + 22px); z-index: 21; border: 0; border-radius: 0 10px 10px 0; background: #fff; box-shadow: 2px 2px 8px rgba(0, 0, 0, .15); width: 30px; height: 48px; font-size: 16px; transition: left .35s; }
+body.收起 .收合鈕 { left: 0; }
+.年大 { font-size: 34px; font-weight: 900; color: var(--期色); line-height: 1.1; }
+.籤列 { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 6px; }
+.籤 { font-size: 14px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--期淺); color: var(--期色); border: 2px solid var(--期色); }
+.籤.實 { background: var(--期色); color: #fff; }
+.籤.年號 { background: #fff; color: #5d4037; border-color: #bcaaa4; }
+#資訊卡 h2 { font-size: 28px; margin: 6px 0 10px; line-height: 1.3; }
+.說明 { margin: 0 0 10px; padding-left: 0; list-style: none; }
+.說明 li { font-size: 21px; line-height: 1.65; margin-bottom: 8px; padding-left: 26px; position: relative; }
+.說明 li::before { content: "●"; color: var(--期色); position: absolute; left: 2px; font-size: 14px; top: 6px; }
+.唸鈕 { border: 0; background: var(--期色); color: #fff; border-radius: 12px; padding: 8px 16px; font-size: 17px; font-weight: 800; }
+.唸鈕.播放中 { background: #455a64; }
+.分頁 { display: flex; gap: 4px; margin: 14px 0 0; border-bottom: 3px solid var(--期淺); }
+.分頁 button { border: 0; background: none; padding: 8px 10px; font-size: 16px; font-weight: 800; color: var(--淡字); border-radius: 10px 10px 0 0; }
+.分頁 button.選 { background: var(--期淺); color: var(--期色); }
+.分頁內 { padding: 12px 2px; font-size: 18px; }
+.註記 dt { font-weight: 900; color: var(--期色); font-size: 18px; margin-top: 8px; }
+.註記 dd { margin: 2px 0 0; line-height: 1.55; }
+.人物卡 { display: flex; gap: 10px; align-items: flex-start; background: #fafafa; border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+.人物卡 .像 { font-size: 30px; }
+.人物卡 b { font-size: 19px; }
+.分類籤 { display: inline-flex; gap: 4px; align-items: center; padding: 4px 10px; border-radius: 10px; color: #fff; font-weight: 800; margin: 0 6px 6px 0; }
+.接下來 { margin-top: 14px; background: #fff8e1; border-left: 6px solid #ffb300; border-radius: 10px; padding: 10px 12px; font-size: 18px; line-height: 1.5; }
+.導覽鈕列 { display: flex; gap: 8px; margin-top: 14px; }
+.導覽鈕列 button { flex: 1; border: 0; border-radius: 14px; padding: 12px 8px; font-size: 18px; font-weight: 900; background: #eceff1; }
+.導覽鈕列 .主 { background: var(--期色); color: #fff; }
+.封面朝代 { font-size: 16px; color: var(--淡字); margin-bottom: 8px; }
+.導言 { font-size: 20px; line-height: 1.7; }
+.重點清單 { font-size: 18px; line-height: 1.6; padding-left: 22px; }
+.站清單 { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.站清單 button { text-align: left; border: 2px solid var(--邊); background: #fff; border-radius: 12px; padding: 8px 12px; font-size: 16px; }
+.站清單 button b { color: var(--期色); margin-right: 6px; }
+.站清單 button.看過::after { content: " ✓"; color: #2e7d32; font-weight: 900; }
+
+/* 圖解 */
+.圖解 { margin-bottom: 14px; }
+.圖解 h4 { margin: 0 0 6px; font-size: 17px; }
+.表框 { overflow-x: auto; }
+.比較表 { border-collapse: collapse; width: 100%; font-size: 16px; }
+.比較表 th, .比較表 td { border: 2px solid #e0e0e0; padding: 6px 8px; text-align: left; vertical-align: top; }
+.比較表 th { background: var(--期色); color: #fff; }
+.比較表 td:first-child { background: var(--期淺); font-weight: 800; }
+.流程 { display: flex; flex-direction: column; gap: 4px; }
+.流程 .步 { background: var(--期淺); border-radius: 10px; padding: 6px 10px; font-weight: 700; }
+.流程 .步.亮 { background: var(--期色); color: #fff; }
+.流程 .箭 { text-align: center; color: var(--期色); font-weight: 900; line-height: 1; }
+.圖示格 { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.圖示格 div { background: var(--期淺); border-radius: 12px; padding: 8px; text-align: center; font-weight: 800; font-size: 15px; }
+.圖示格 span { display: block; font-size: 32px; }
+.地圖說 { background: #e3f2fd; border-radius: 10px; padding: 8px 10px; font-size: 16px; }
+
+/* ── 時間軸拉軸 ── */
+#軌道 { position: fixed; right: 12px; top: calc(var(--頂高) + 12px); bottom: 12px; width: 270px; z-index: 20; background: var(--卡底); border-radius: 18px; box-shadow: 0 8px 28px rgba(0, 0, 0, .18); display: flex; flex-direction: column; }
+.軌道頭 { padding: 12px 14px 8px; font-size: 20px; font-weight: 900; display: flex; flex-direction: column; }
+.軌道頭 small { font-size: 12px; color: var(--淡字); font-weight: 600; }
+#軌道捲 { flex: 1; overflow-y: auto; padding: 0 8px 16px 0; }
+#軌道內 { position: relative; }
+.軌列 { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; width: 100%; border: 0; background: none; text-align: left; padding: 4px 6px 4px 44px; min-height: 46px; position: relative; font-size: 15px; color: var(--字); }
+.軌列::before { content: ""; position: absolute; left: 18px; top: 0; bottom: 0; width: 10px; background: var(--c); }
+.軌列 .點 { position: absolute; left: 15px; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 3px solid var(--c); }
+.軌列 .年 { font-weight: 900; color: var(--c); font-size: 13px; line-height: 1.2; }
+.軌列 .名 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; line-height: 1.3; }
+.軌列:hover { background: rgba(0, 0, 0, .04); }
+.軌列.選 { background: var(--淺); }
+.軌列.選 .名 { font-weight: 900; }
+.軌列.看過 .點 { background: var(--c); }
+.軌期 { display: block; width: 100%; border: 0; text-align: left; padding: 8px 8px 8px 40px; position: relative; background: none; }
+.軌期::before { content: ""; position: absolute; left: 14px; top: 0; bottom: 0; width: 18px; background: var(--c); border-radius: 6px 6px 0 0; }
+.軌期 b { display: block; font-size: 17px; color: var(--c); }
+.軌期 small { font-size: 12px; color: var(--淡字); }
+.軌小期 { font-size: 12px; font-weight: 800; color: var(--c); padding: 2px 6px 2px 44px; position: relative; }
+.軌小期::before { content: ""; position: absolute; left: 18px; top: 0; bottom: 0; width: 10px; background: var(--c); }
+#軌把 { position: absolute; left: 9px; width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 5px solid #263238; box-shadow: 0 2px 8px rgba(0, 0, 0, .35); z-index: 3; cursor: grab; touch-action: none; transition: top .25s; }
+#軌把.拖 { cursor: grabbing; transition: none; }
+#軌把 .泡 { position: absolute; right: 36px; top: -6px; background: #263238; color: #fff; padding: 4px 10px; border-radius: 8px; font-size: 14px; white-space: nowrap; display: none; }
+#軌把.拖 .泡 { display: block; }
+.手機鈕 { display: none; }
+
+/* ── 字幕、提示 ── */
+.字幕 { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); max-width: min(760px, calc(100vw - 780px)); background: rgba(20, 28, 34, .82); color: #fff; font-size: 22px; font-weight: 800; padding: 10px 20px; border-radius: 14px; z-index: 15; opacity: 0; text-align: center; line-height: 1.45; pointer-events: none; }
+.字幕.現 { animation: 字幕入 .5s forwards; }
+@keyframes 字幕入 { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+#操作提示 { position: fixed; left: 50%; top: calc(var(--頂高) + 10px); transform: translateX(-50%); background: rgba(255, 255, 255, .9); padding: 6px 14px; border-radius: 999px; font-size: 14px; font-weight: 700; z-index: 15; transition: opacity 1s; white-space: nowrap; }
+#操作提示.淡 { opacity: 0; pointer-events: none; }
+
+/* ── 3D 標籤 ── */
+.標 { position: absolute; left: 0; top: 0; white-space: nowrap; opacity: 0; transition: opacity .45s; font-weight: 800; pointer-events: none; will-change: transform; }
+.標.現 { opacity: 1; }
+.標.可點 { pointer-events: auto; cursor: pointer; }
+.標-地 { background: #fff; color: #263238; padding: 3px 10px; border-radius: 999px; font-size: 15px; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.標-建 { background: #fff8e1; color: #5d4037; border: 2px solid #d7a86e; padding: 3px 10px; border-radius: 8px; font-size: 15px; }
+.標-陣 { background: var(--c); color: #fff; padding: 4px 12px; border-radius: 8px; font-size: 16px; border: 2px solid #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, .35); }
+.標-陣.淺底 { color: #1f2a30; border-color: #1f2a30; }
+.標-人 { background: #fff; color: #1f2a30; border: 3px solid var(--c, #555); padding: 3px 12px; border-radius: 999px; font-size: 17px; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+.標-牌 { background: #263238; color: #fff; padding: 6px 14px; border-radius: 10px; font-size: 18px; max-width: 300px; white-space: normal; text-align: center; box-shadow: 0 3px 10px rgba(0, 0, 0, .3); }
+.牌-警 { background: #c62828; }
+.牌-資 { background: #1565c0; }
+.牌-喜 { background: #2e7d32; }
+.標-話 { background: #fff; border: 2px solid #37474f; border-radius: 14px; padding: 4px 12px; font-size: 16px; }
+.標-戰 { font-size: 34px; animation: 跳 .5s infinite alternate; }
+@keyframes 跳 { to { margin-top: -8px; } }
+.標-物 { background: #fffde7; border: 2px solid #f9a825; color: #5d4037; padding: 2px 8px; border-radius: 8px; font-size: 14px; }
+.標-區塊 { background: var(--c); color: #fff; padding: 3px 12px; border-radius: 8px; font-size: 16px; opacity: .92; }
+.標-警 { background: #d32f2f; color: #fff; padding: 3px 10px; border-radius: 8px; font-size: 15px; }
+.標-年 { background: #fff; border-left: 6px solid var(--期色); padding: 4px 10px; border-radius: 8px; font-size: 14px; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.標-年 b { color: var(--期色); }
+.標-年:hover { background: #fff3e0; }
+.標-周邊 { background: rgba(255, 255, 255, .72); color: #455a64; padding: 3px 10px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; line-height: 1.25; }
+.標-周邊 .區名 { font-size: 15px; font-weight: 900; }
+.標-周邊 .區朝 { font-size: 12px; font-weight: 700; color: #6d4c41; }
+.標-周邊.重點 { background: #fff; border: 3px solid #ff7043; color: #1f2a30; box-shadow: 0 3px 10px rgba(0, 0, 0, .3); }
+.標-周邊.重點 .區名 { font-size: 19px; }
+.標-周邊.重點 .區朝 { font-size: 15px; color: #bf360c; }
+.標.閃 { animation: 閃 .8s 3; }
+@keyframes 閃 { 50% { filter: brightness(1.6); box-shadow: 0 0 0 6px #ffeb3b; } }
+
+/* ── 彈窗：測驗、索引、整理 ── */
+.遮罩 { position: fixed; inset: 0; background: rgba(15, 22, 28, .55); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.遮罩[hidden] { display: none; }
+.彈窗 { background: #fff; border-radius: 22px; width: min(920px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; padding: 22px 26px; border-top: 10px solid var(--期色); position: relative; }
+.彈窗 h2 { margin: 0 0 12px; font-size: 28px; }
+.關閉 { position: absolute; right: 14px; top: 12px; border: 0; background: #eceff1; width: 44px; height: 44px; border-radius: 50%; font-size: 22px; }
+.進度點 { display: flex; gap: 6px; margin-bottom: 12px; }
+.進度點 i { width: 14px; height: 14px; border-radius: 50%; background: #e0e0e0; }
+.進度點 i.對 { background: #43a047; }
+.進度點 i.錯 { background: #ff9800; }
+.進度點 i.現 { outline: 3px solid var(--期色); }
+.題幹 { font-size: 32px; font-weight: 900; line-height: 1.45; margin: 10px 0 18px; }
+.選項列 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.選項鈕 { border: 4px solid #cfd8dc; background: #fff; border-radius: 18px; padding: 22px 14px; font-size: 30px; font-weight: 900; min-height: 110px; }
+.選項鈕:hover:not(:disabled) { border-color: var(--期色); }
+.選項鈕.正解 { border-color: #43a047; background: #e8f5e9; }
+.選項鈕.你選 { border-color: #ff9800; background: #fff3e0; }
+.選項鈕:disabled { cursor: default; color: var(--字); opacity: 1; }
+.回饋 { margin-top: 16px; background: #f1f8e9; border-radius: 14px; padding: 14px 16px; font-size: 21px; line-height: 1.6; }
+.回饋.錯 { background: #fff8e1; }
+.回饋 b { font-size: 24px; }
+.彈窗鈕列 { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.彈窗鈕列 button { border: 0; border-radius: 14px; padding: 12px 18px; font-size: 19px; font-weight: 900; background: #eceff1; }
+.彈窗鈕列 .主 { background: var(--期色); color: #fff; }
+.成績 { font-size: 48px; font-weight: 900; color: var(--期色); }
+.分類板 { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.分類欄 { border-radius: 14px; background: #fafafa; padding: 10px; border-top: 6px solid var(--c); }
+.分類欄 h3 { margin: 0 0 8px; font-size: 19px; color: var(--c); }
+.晶片 { display: block; width: 100%; text-align: left; border: 2px solid #eceff1; background: #fff; border-radius: 10px; padding: 6px 8px; margin-bottom: 6px; font-size: 15px; }
+.晶片 b { color: var(--c, var(--期色)); margin-right: 4px; }
+.索引分頁 { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.索引分頁 button { border: 2px solid #cfd8dc; background: #fff; border-radius: 999px; padding: 6px 14px; font-size: 17px; font-weight: 800; }
+.索引分頁 button.選 { background: #263238; color: #fff; border-color: #263238; }
+.搜尋 { width: 100%; font-size: 18px; padding: 10px 14px; border-radius: 12px; border: 2px solid #cfd8dc; margin-bottom: 12px; }
+.索引期 { margin-bottom: 14px; }
+.索引期 h3 { margin: 0 0 6px; color: var(--c); font-size: 19px; border-bottom: 3px solid var(--c); padding-bottom: 2px; }
+.索引項 { display: inline-flex; flex-direction: column; text-align: left; border: 2px solid #eceff1; background: #fff; border-radius: 12px; padding: 6px 10px; margin: 0 6px 6px 0; font-size: 16px; max-width: 280px; vertical-align: top; }
+.索引項 b { font-size: 17px; }
+.索引項 small { color: var(--淡字); font-size: 13px; line-height: 1.4; }
+
+/* ── 平板與手機 ── */
+@media (max-width: 1200px) {
+  #資訊卡 { width: 380px; }
+  .收合鈕 { left: 396px; }
+  body.收起 #資訊卡 { transform: translateX(-410px); }
+  #軌道 { width: 230px; }
+  .字幕 { max-width: calc(100vw - 660px); font-size: 19px; }
+  .工具列 button { font-size: 13px; padding: 7px 8px; }
+}
+@media (max-width: 900px) {
+  :root { --頂高: 104px; }
+  #頂列 { flex-wrap: wrap; height: var(--頂高); align-content: center; row-gap: 4px; }
+  .品牌 { font-size: 18px; }
+  .品牌 small { display: none; }
+  #時期列 { order: 3; flex-basis: 100%; }
+  .工具列 { overflow-x: auto; flex: 1; }
+  #資訊卡 { left: 8px; right: 8px; width: auto; top: auto; bottom: 8px; max-height: 46vh; padding: 14px 16px; }
+  body.收起 #資訊卡 { transform: translateY(calc(100% - 46px)); }
+  .收合鈕 { display: none; }
+  #軌道 { right: 8px; width: 250px; bottom: auto; height: 52vh; transform: translateX(270px); transition: transform .3s; }
+  body.開軌道 #軌道 { transform: none; }
+  .手機鈕 { display: block; position: fixed; right: 8px; top: calc(var(--頂高) + 8px); z-index: 21; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+  body.開軌道 .手機鈕 { right: 266px; }
+  .字幕 { max-width: calc(100vw - 24px); bottom: calc(46vh + 16px); font-size: 17px; }
+  #操作提示 { display: none; }
+  .說明 li { font-size: 18px; }
+  #資訊卡 h2 { font-size: 23px; }
+  .題幹 { font-size: 25px; }
+  .選項鈕 { font-size: 23px; min-height: 84px; }
+}
+@media (max-width: 380px) {
+  .選項列 { gap: 8px; }
+  .選項鈕 { font-size: 20px; padding: 14px 6px; }
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>臺灣歷史軌跡</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+<div id="舞台區">
+  <canvas id="畫布" aria-label="可以拖曳旋轉的臺灣立體歷史場景"></canvas>
+  <div id="標籤層"></div>
+  <div id="無3D" hidden>這台電腦的瀏覽器不支援 3D 顯示，左邊的文字、圖解和測驗還是可以使用。</div>
+</div>
+
+<header id="頂列">
+  <div class="品牌">🧭 臺灣歷史軌跡<small>國中社會 1上｜史前～清帝國</small></div>
+  <nav id="時期列" aria-label="時期"></nav>
+  <div class="工具列">
+    <button id="鈕全景" title="看整個東亞海域">🌏 東亞全景</button>
+    <button id="鈕臺灣" title="看整個臺灣">🏝️ 臺灣全景</button>
+    <button id="鈕焦點" title="回到這一站的鏡頭">🎯 回到焦點</button>
+    <button id="鈕重播" title="這一站重新演一次">🔁 重播</button>
+    <button id="鈕朗讀">🔊 自動朗讀：開</button>
+    <button id="鈕索引">🔎 人事物索引</button>
+  </div>
+</header>
+
+<aside id="資訊卡" aria-live="polite"></aside>
+<button id="鈕收合" class="收合鈕" title="收起／打開說明卡">◀</button>
+
+<aside id="軌道">
+  <div class="軌道頭">🕰️ 時間軸<small>拖曳圓鈕或點一下</small></div>
+  <div id="軌道捲"><div id="軌道內"><div id="軌把" title="拖曳我來選時間"></div></div></div>
+</aside>
+<button id="鈕軌道" class="手機鈕">🕰️ 時間軸</button>
+
+<div id="字幕" class="字幕"></div>
+<div id="操作提示">🖱️ 左鍵拖曳：旋轉　滾輪：縮放　右鍵拖曳：平移　雙擊：拉近（手機：單指旋轉、雙指縮放）</div>
+
+<div id="遮罩" class="遮罩" hidden>
+  <div id="彈窗" class="彈窗" role="dialog" aria-modal="true"></div>
+</div>
+
+<script src="js/vendor/three.min.js?v=1"></script>
+<script src="js/data.js?v=1"></script>
+<script src="js/scenes.js?v=1"></script>
+<script src="js/world.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>
