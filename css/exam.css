@@ -1,0 +1,22 @@
+/* 會考題參考（exam.js）——與 style.css 分開，改這裡不影響教學影片錄影指紋 */
+.考說明 { font-size: 17px; color: #55636b; margin: 0 0 12px; line-height: 1.6; }
+.索引分頁 button[data-p].選 { background: var(--c, #263238); border-color: var(--c, #263238); }
+.考顯答 { margin-left: auto; }
+.考卡 { border: 2px solid #eceff1; border-left: 8px solid var(--c); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+.考頭 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.考年 { font-weight: 900; color: #37474f; font-size: 16px; }
+.考期 { font-size: 14px; font-weight: 800; color: var(--c); border: 2px solid var(--c); border-radius: 999px; padding: 1px 10px; }
+.考期.跨 { color: #6d4c41; border-color: #bcaaa4; }
+.考引 { background: #fafafa; border-radius: 10px; padding: 10px 12px; font-size: 18px; line-height: 1.7; margin-bottom: 8px; }
+.考圖 { background: #fff8e1; border-radius: 10px; padding: 8px 12px; font-size: 16px; line-height: 1.6; margin-bottom: 8px; color: #5d4037; }
+.考幹 { font-size: 21px; font-weight: 800; line-height: 1.6; margin-bottom: 10px; }
+.考選列 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.考選 { text-align: left; border: 3px solid #cfd8dc; background: #fff; border-radius: 12px; padding: 10px 12px; font-size: 18px; line-height: 1.5; }
+.考選:hover:not(:disabled) { border-color: var(--c); }
+.考選.正解 { border-color: #43a047; background: #e8f5e9; }
+.考選.你選 { border-color: #ff9800; background: #fff3e0; }
+.考選:disabled { cursor: default; color: inherit; }
+.考解 { margin-top: 10px; background: #f1f8e9; border-radius: 10px; padding: 10px 12px; font-size: 18px; line-height: 1.6; }
+.考複習 { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.考複習 button { border: 0; border-radius: 10px; padding: 6px 12px; font-size: 16px; font-weight: 800; background: #fff; }
+@media (max-width: 700px) { .考選列 { grid-template-columns: 1fr; } .考幹 { font-size: 19px; } }
