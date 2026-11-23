@@ -164,6 +164,7 @@
 
   const 山們 = [];
   const 埔里xz = 投(120.97, 23.97);
+  const 八仙洞xz = 投(121.41, 23.33);   // 長濱八仙洞前留一塊海岸平台，演出才看得到
   function 造山脈(線, 高們, 基r) {
     for (let s = 0; s < 線.length - 1; s++) {
       const [ax, az] = 投(...線[s]), [bx, bz] = 投(...線[s + 1]);
@@ -172,6 +173,7 @@
         const t = k / n, x = ax + (bx - ax) * t + (亂() - .5) * 14, z = az + (bz - az) * t + (亂() - .5) * 14;
         if (!在內(x, z, 臺灣)) continue;
         if (Math.hypot(x - 埔里xz[0], z - 埔里xz[1]) < 18) continue;
+        if (Math.hypot(x - 八仙洞xz[0], z - 八仙洞xz[1]) < 16) continue;
         const r = Math.min(基r * (.7 + 亂() * .6), 邊距(x, z, 臺灣) * .95);
         if (r < 7) continue;
         山們.push({ x, z, r, h: (高們[s] + (高們[s + 1] - 高們[s]) * t) * (.65 + 亂() * .5) });
@@ -215,15 +217,15 @@
     場景 = new T.Scene();
     場景.fog = new T.Fog(0xdcecf8, 4200, 11000);
     鏡頭 = new T.PerspectiveCamera(42, 1, 2, 16000);
-    場景.add(new T.HemisphereLight(0xeaf6ff, 0x8f8266, .82));
-    const 日 = new T.DirectionalLight(0xfff1dc, .9);
+    場景.add(new T.HemisphereLight(0xeaf6ff, 0x8f8266, .62));
+    const 日 = new T.DirectionalLight(0xfff1dc, .72);
     日.position.set(260, 620, 300);
     日.castShadow = true;
     日.shadow.mapSize.set(2048, 2048);
     Object.assign(日.shadow.camera, { left: -460, right: 460, top: 460, bottom: -460, near: 50, far: 1600 });
     日.shadow.bias = -0.0008;
     場景.add(日);
-    場景.add(new T.AmbientLight(0xffffff, .12));
+    場景.add(new T.AmbientLight(0xffffff, .1));
 
     浮島 = new T.Group();
     場景.add(浮島);
@@ -232,7 +234,7 @@
 
     // 海盤
     const 海 = new T.Mesh(new T.CylinderGeometry(盤R, 盤R, 12, 128, 1),
-      [材(0x2f6f93), 材(0x5db7e6, { roughness: .35, metalness: .05 }), 材(0x3b2f2f)]);
+      [材(0x2f6f93), 材(0x4aa3d8, { roughness: .35, metalness: .05 }), 材(0x3b2f2f)]);
     海.position.y = -6; 海.receiveShadow = true;
     浮島.add(海);
     W.海 = 海;
@@ -289,7 +291,7 @@
     // 陸地
     造陸(臺灣, 0x7dbb5a, 0xe8d7a5, 5, true);
     造陸(澎湖, 0x7dbb5a, 0xe8d7a5, 5, true);
-    鄰陸們.forEach(p => 造陸(p, 0xa8bb7c, 0xd9c99a, 3.6, false));
+    鄰陸們.forEach(p => 造陸(p, 0x9db57a, 0xd9c99a, 3.6, false));
     造山();
     造樹();
     造河();
@@ -1386,6 +1388,8 @@
     const 調 = () => { const w = 畫布.clientWidth, h = 畫布.clientHeight; 渲染器.setSize(w, h, false); 鏡頭.aspect = w / h; 鏡頭.updateProjectionMatrix(); };
     window.addEventListener("resize", 調); 調();
     套鏡頭();
+    W.錄影 = !!o.錄影;
+    if (W.錄影) return;   // 錄影時由錄製程式一格一格呼叫 W.步進()，不自己跑動畫迴圈
     let 上 = performance.now();
     function 迴圈(now) {
       requestAnimationFrame(迴圈);
@@ -1425,7 +1429,7 @@
     浮島.rotation.z = Math.sin(時鐘.總 * .3) * .004;
     雲群.children.forEach(c => { const a = Math.atan2(c.position.z, c.position.x) + c.userData.速 * dt, r = Math.hypot(c.position.x, c.position.z); c.position.x = Math.cos(a) * r; c.position.z = Math.sin(a) * r; });
     瀑布材.forEach(m => { m.map.offset.y += dt * .5; });
-    if (W.自轉 && performance.now() - 控.互動 > 6000 && !控.補) 控.方位 += dt * .05;
+    if (W.自轉 && (W.錄影 || performance.now() - 控.互動 > 6000) && !控.補) 控.方位 += dt * .05;
     更新補間(dt);
     套鏡頭();
     渲染器.render(場景, 鏡頭);

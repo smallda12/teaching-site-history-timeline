@@ -354,9 +354,11 @@
   $("#資訊卡").addEventListener("dblclick", () => { if (innerWidth <= 900) document.body.classList.toggle("收起"); });
 
   /* ── 啟動 ── */
+  const 錄影模式 = new URLSearchParams(location.search).has("錄影");
+  if (錄影模式) document.body.classList.add("錄影");
   let W3D = false;
   try {
-    W.啟動({ 畫布: $("#畫布"), 標籤層: $("#標籤層"), 字幕: $("#字幕"), 地點表: TL.地點 });
+    W.啟動({ 畫布: $("#畫布"), 標籤層: $("#標籤層"), 字幕: $("#字幕"), 地點表: TL.地點, 錄影: 錄影模式 });
     W3D = true;
   } catch (err) {
     console.error(err);
@@ -364,11 +366,72 @@
   }
   設朗讀鈕();
   畫軌道();
+  window.App = { 去事件, 去封面, 全事件, 唸稿 };
+  if (錄影模式) { 狀態.朗讀 = false; 建錄影介面(); return; }
   const 網址id = new URLSearchParams(location.search).get("e");
   const 上次 = 網址id || 存.讀("目前", null);
   if (上次 && 依id[上次]) { 去封面(依id[上次].pi); 去事件(上次, false); }
   else 去封面(0);
 
-  // 給教學影片錄製腳本用
-  window.App = { 去事件, 去封面, 全事件, 唸稿 };
+  /* ── 教學影片錄影模式（index.html?錄影=1）：錄製程式呼叫 window.錄影 ── */
+  function 建錄影介面() {
+    const 層 = document.createElement("div");
+    層.id = "錄影層";
+    層.innerHTML = `<div id="錄影軸"></div><div id="錄影卡"></div><div id="錄影大標" hidden></div>
+      <div id="錄影字幕帶"><span id="錄影字幕"></span></div>`;
+    document.body.appendChild(層);
+    // 頂端時間軸：51 站依小時期上色，目前這一站放大
+    $("#錄影軸").innerHTML = TL.時期.map((p, pi) => `<div class="錄段" data-p="${pi}" style="--c:${p.色};flex:${p.事件.length}">
+        <div class="錄格列">${p.事件.map(e => `<i data-id="${e.id}" style="--c:${小期色(依id[e.id])}"></i>`).join("")}</div>
+        <span>${p.名}</span></div>`).join("");
+    const 卡 = $("#錄影卡"), 大 = $("#錄影大標"), 字 = $("#錄影字幕");
+    const 標軸 = (pi, id) => {
+      document.querySelectorAll("#錄影軸 .錄段").forEach(s => s.classList.toggle("現", +s.dataset.p === pi));
+      document.querySelectorAll("#錄影軸 i").forEach(i => {
+        const g = 依id[i.dataset.id].gi, 目 = id ? 依id[id].gi : -1;
+        i.classList.toggle("現", i.dataset.id === id);
+        i.classList.toggle("過", 目 >= 0 && g < 目);
+      });
+    };
+    const 期序 = ["第一個時期", "第二個時期", "第三個時期", "第四個時期", "第五個時期"];
+    let 上字 = null;
+    window.錄影 = {
+      開場(文) {
+        W.清場(); W.設周邊(null, []); W.自轉 = true;
+        W.鏡頭至({ 看: [0, -120], 距: 2000, 方位: 0, 仰: 50 }, .01);
+        卡.hidden = true; 大.hidden = false; 大.innerHTML = 文;
+        $("#錄影軸").style.visibility = "hidden";
+        return 0;
+      },
+      結尾(文) {
+        W.清場(); W.設周邊(1895, ["中國", "日本"]); W.自轉 = true;
+        W.鏡頭至({ 看: [0, 10], 距: 1100, 方位: 0, 仰: 48 }, 3);
+        卡.hidden = true; 大.hidden = false; 大.innerHTML = 文;
+        $("#錄影軸").style.visibility = "visible"; 標軸(-1, null);
+        return 0;
+      },
+      時期(pi) {
+        const p = TL.時期[pi]; 套期色(p);
+        W.總覽(p, () => { }, SC);
+        大.hidden = true; 卡.hidden = false; $("#錄影軸").style.visibility = "visible";
+        卡.innerHTML = `<div class="錄期序">${期序[pi]}</div><div class="錄年">${p.年代}</div><div class="錄題">${p.名}</div><div class="錄朝">🏯 ${p.朝代}</div>`;
+        標軸(pi, null);
+        return 0;
+      },
+      事件(id) {
+        const x = 依id[id]; 套期色(x.p);
+        大.hidden = true; 卡.hidden = false; $("#錄影軸").style.visibility = "visible";
+        卡.innerHTML = `<div class="錄年">${x.e.年}</div>
+          <div class="籤列"><span class="籤 實">${x.p.名}</span><span class="籤" style="color:${小期色(x)};border-color:${小期色(x)}">${x.e.小期}</span><span class="籤 年號">🏯 ${x.e.年號}</span></div>
+          <div class="錄題">${x.e.標題}</div>`;
+        標軸(x.pi, id);
+        return W.演出(x.e, SC);
+      },
+      步(dt, 文) {
+        if (文 !== 上字) { 字.textContent = 文 || ""; 字.style.visibility = 文 ? "visible" : "hidden"; 上字 = 文; }
+        W.步進(dt);
+      }
+    };
+    window.錄影.步(0, "");
+  }
 })();
