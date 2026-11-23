@@ -439,8 +439,13 @@
     return L;
   }
   function 移除標籤(L) { if (!L || !L.活) return; L.活 = false; L.el.remove(); }
+  // 標籤避讓：疊在畫面上的字卡（錄影模式的大標、說明卡、時間軸）也算障礙物
+  const 遮擋選擇器 = "#錄影卡:not([hidden]), #錄影大標:not([hidden]), #錄影軸";
+  const 避讓距 = 4;
+  function 撞(a, b) { return a.x < b.x + b.w + 避讓距 && b.x < a.x + a.w + 避讓距 && a.y < b.y + b.h + 避讓距 && b.y < a.y + a.h + 避讓距; }
   function 更新標籤() {
     const w = 畫布.clientWidth, h = 畫布.clientHeight;
+    const 可見 = [];
     for (let i = 標籤們.length - 1; i >= 0; i--) {
       const L = 標籤們[i];
       if (!L.活) { 標籤們.splice(i, 1); continue; }
@@ -450,10 +455,48 @@
       } else 暫v.copy(L.錨);
       暫v.y += L.偏高;
       暫v.project(鏡頭);
-      if (暫v.z > 1 || 暫v.x < -1.2 || 暫v.x > 1.2 || 暫v.y < -1.2 || 暫v.y > 1.2) { L.el.style.display = "none"; continue; }
-      L.el.style.display = "";
-      L.el.style.transform = `translate(${(暫v.x + 1) / 2 * w}px,${(1 - 暫v.y) / 2 * h}px) translate(-50%,-100%)`;
-      L.el.style.zIndex = String(1000 - Math.round(暫v.z * 900));
+      if (暫v.z > 1 || 暫v.x < -1.2 || 暫v.x > 1.2 || 暫v.y < -1.2 || 暫v.y > 1.2) { L.el.style.display = "none"; L.已顯 = false; continue; }
+      if (L.el.style.display === "none") L.el.style.display = "";
+      L.sx = (暫v.x + 1) / 2 * w; L.sy = (1 - 暫v.y) / 2 * h; L.sz = 暫v.z;
+      可見.push(L);
+    }
+    // 先量尺寸（集中讀取，避免反覆重排）
+    for (const L of 可見) { L.寬 = L.el.offsetWidth; L.高 = L.el.offsetHeight; }
+    const 層框 = 標籤層.getBoundingClientRect();
+    const 障 = [];
+    document.querySelectorAll(遮擋選擇器).forEach(el => {
+      if (el.style.visibility === "hidden") return;
+      const r = el.getBoundingClientRect();
+      if (r.width && r.height) 障.push({ x: r.left - 層框.left, y: r.top - 層框.top, w: r.width, h: r.height });
+    });
+    // 依優先序擺放：周邊國家標籤最後擺（最常讓位），同類依建立先後（順序穩定，畫面不會跳）
+    可見.reverse();
+    const 序 = 可見.filter(L => !L.el.classList.contains("標-周邊")).concat(可見.filter(L => L.el.classList.contains("標-周邊")));
+    const 已放 = 障.slice();
+    for (const L of 序) {
+      const 原 = { x: L.sx - L.寬 / 2, y: L.sy - L.高, w: L.寬, h: L.高 };
+      // 錨點還在畫面內時，標籤不要被畫面左右邊緣切掉
+      let 邊 = 0;
+      if (L.sx >= 0 && L.sx <= w) 邊 = 原.x < 0 ? -原.x : 原.x + 原.w > w ? w - 原.x - 原.w : 0;
+      原.x += 邊; L.sx += 邊;
+      let 選 = [0, 0];
+      const 空 = (dx, dy) => {
+        const r = { x: 原.x + dx, y: 原.y + dy, w: 原.w, h: 原.h };
+        if ((dx || dy) && (r.y < 0 || r.y + r.h > h || r.x < 0 || r.x + r.w > w)) return false;
+        for (const o of 已放) if (撞(r, o)) return false;
+        return true;
+      };
+      if (!空(0, 0)) {
+        找: for (let 距 = 6; 距 <= 260; 距 += 6) {
+          for (const [dx, dy] of [[0, -距], [0, 距], [-距, 0], [距, 0]]) if (空(dx, dy)) { 選 = [dx, dy]; break 找; }
+        }
+      }
+      // 平滑移動，避免旋轉時標籤一格一格跳；剛出現的直接到位
+      if (!L.已顯) { L.dx = 選[0]; L.dy = 選[1]; L.已顯 = true; }
+      else { L.dx += (選[0] - L.dx) * .3; L.dy += (選[1] - L.dy) * .3; }
+      已放.push({ x: 原.x + 選[0], y: 原.y + 選[1], w: 原.w, h: 原.h });
+      L.el.style.transform = `translate(${L.sx + L.dx}px,${L.sy + L.dy}px) translate(-50%,-100%)`;
+      L.el.style.zIndex = String(1000 - Math.round(L.sz * 900));
     }
   }
 
