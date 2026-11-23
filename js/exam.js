@@ -9,8 +9,8 @@
   const $ = (s) => document.querySelector(s);
   const 事件名 = {}, 期名 = {}, 期色 = {};
   TL.時期.forEach(p => { 期名[p.id] = p.名; 期色[p.id] = p.色; p.事件.forEach(e => 事件名[e.id] = e.標題); });
-  const 原卷 = (年) => `https://cap.rcpet.edu.tw/exam/${年}/${年}exam.html`;
   const 字 = (s) => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])).replace(/\n/g, "<br>");
+  const 屬 = (s) => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c])).replace(/\n/g, " ");
 
   let 篩 = "全部", 顯答 = false;
   function 開會考() {
@@ -40,9 +40,10 @@
   }
   function 卡(q, i) {
     return `<div class="考卡" data-i="${i}" style="--c:${期色[q.時期]}">
-      <div class="考頭"><span class="考年">${q.年}年會考 第${q.題號}題</span><span class="考期">${期名[q.時期] || ""}</span>${q.跨時期 ? `<span class="考期 跨">跨時期</span>` : ""}</div>
+      <div class="考頭"><span class="考年">${q.年}年會考 第${q.題號}題</span><span class="考期">${期名[q.時期] || ""}</span>${q.跨時期 ? `<span class="考期 跨">跨時期</span>` : ""}<a class="考原" href="${屬(q.原卷)}" target="_blank" rel="noopener" title="在原卷第 ${q.頁} 頁開啟（新分頁）">📄 看原卷（第${q.頁}頁）</a></div>
       ${q.題組引文 ? `<div class="考引">${字(q.題組引文)}</div>` : ""}
-      ${q.圖表文字 ? `<div class="考圖">${q.有圖 ? "🖼️ 原題附圖：" : "📋 "}${字(q.圖表文字)}${q.有圖 ? `　<a href="${原卷(q.年)}" target="_blank" rel="noopener">看原卷 ↗</a>` : ""}</div>` : ""}
+      ${q.圖 ? `<figure class="考題圖"><img src="${屬(q.圖)}" alt="${屬(q.圖表文字 || "原題附圖")}" loading="lazy"></figure>`
+        : q.圖表文字 ? `<div class="考圖">${q.有圖 ? "🖼️ 原題附圖：" : "📋 "}${字(q.圖表文字)}</div>` : ""}
       <div class="考幹">${字(q.題幹)}</div>
       <div class="考選列">${q.選項.map(o => `<button class="考選" data-k="${o.trim().charAt(1)}">${字(o)}</button>`).join("")}</div>
       <div class="考解" hidden></div>

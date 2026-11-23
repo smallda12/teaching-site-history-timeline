@@ -9,6 +9,10 @@
 .考期.跨 { color: #6d4c41; border-color: #bcaaa4; }
 .考引 { background: #fafafa; border-radius: 10px; padding: 10px 12px; font-size: 18px; line-height: 1.7; margin-bottom: 8px; }
 .考圖 { background: #fff8e1; border-radius: 10px; padding: 8px 12px; font-size: 16px; line-height: 1.6; margin-bottom: 8px; color: #5d4037; }
+.考原 { margin-left: auto; font-size: 14px; font-weight: 800; color: #455a64; text-decoration: none; border: 2px solid #cfd8dc; border-radius: 999px; padding: 1px 10px; }
+.考原:hover { border-color: var(--c); color: var(--c); }
+.考題圖 { margin: 0 0 10px; text-align: center; background: #fff; border: 2px solid #eceff1; border-radius: 10px; padding: 8px; }
+.考題圖 img { display: block; margin: 0 auto; max-width: 100%; height: auto; max-height: 420px; object-fit: contain; }
 .考幹 { font-size: 21px; font-weight: 800; line-height: 1.6; margin-bottom: 10px; }
 .考選列 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .考選 { text-align: left; border: 3px solid #cfd8dc; background: #fff; border-radius: 12px; padding: 10px 12px; font-size: 18px; line-height: 1.5; }
