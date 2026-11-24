@@ -426,6 +426,7 @@
 
   /* ══════════ 7. 標籤（HTML 疊在 3D 上） ══════════ */
   const 標籤們 = [];
+  W.標籤們 = 標籤們; // 量測用（只讀）：每個標籤的 dx、dy 是避讓偏移
   const 暫v = new T.Vector3();
   function 加標籤(html, 類, 錨, 偏高 = 0, 可點 = null) {
     const el = document.createElement("div");
@@ -442,9 +443,16 @@
   // 標籤避讓：疊在畫面上的字卡（錄影模式的大標、說明卡、時間軸）也算障礙物
   const 遮擋選擇器 = "#錄影卡:not([hidden]), #錄影大標:not([hidden]), #錄影軸";
   const 避讓距 = 4;
-  function 撞(a, b) { return a.x < b.x + b.w + 避讓距 && b.x < a.x + a.w + 避讓距 && a.y < b.y + b.h + 避讓距 && b.y < a.y + a.h + 避讓距; }
-  function 更新標籤() {
+  // 避讓要「穩」：標籤的偏移量是「狀態」，每格只依上一格微調——被擠到才往最近的空位推（小幅度當格推開，大幅度用滑的），
+  // 回原位要等空得夠寬才慢慢退回；位置連續、不瞬移
+  const 回位餘裕 = 16;   // 回原位前，原位要比「剛好不碰」再多空這麼多像素（防止在邊界來回抖）
+  const 回位速 = 45;     // 退回原位的速度（像素／秒），慢慢退才不搶眼
+  const 最遠離 = 260;    // 標籤最多被推離原位這麼遠（再遠就跟景物對不上了）
+  const 最快速 = 420;    // 被推開時，標籤每秒最多移動這麼多像素（再大的位移也用滑的，不瞬移）
+  function 撞(a, b, m = 避讓距) { return a.x < b.x + b.w + m && b.x < a.x + a.w + m && a.y < b.y + b.h + m && b.y < a.y + a.h + m; }
+  function 更新標籤(dt) {
     const w = 畫布.clientWidth, h = 畫布.clientHeight;
+    dt = dt > 0 ? dt : 0;
     const 可見 = [];
     for (let i = 標籤們.length - 1; i >= 0; i--) {
       const L = 標籤們[i];
@@ -473,28 +481,72 @@
     可見.reverse();
     const 序 = 可見.filter(L => !L.el.classList.contains("標-周邊")).concat(可見.filter(L => L.el.classList.contains("標-周邊")));
     const 已放 = 障.slice();
+    const 界內 = (R) => R.x >= 0 && R.y >= 0 && R.x + R.w <= w && R.y + R.h <= h;
+    const 衝 = (R, m = 避讓距) => { for (const o of 已放) if (撞(R, o, m)) return o; return null; };
     for (const L of 序) {
-      const 原 = { x: L.sx - L.寬 / 2, y: L.sy - L.高, w: L.寬, h: L.高 };
-      // 錨點還在畫面內時，標籤不要被畫面左右邊緣切掉
-      let 邊 = 0;
-      if (L.sx >= 0 && L.sx <= w) 邊 = 原.x < 0 ? -原.x : 原.x + 原.w > w ? w - 原.x - 原.w : 0;
-      原.x += 邊; L.sx += 邊;
-      let 選 = [0, 0];
-      const 空 = (dx, dy) => {
-        const r = { x: 原.x + dx, y: 原.y + dy, w: 原.w, h: 原.h };
-        if ((dx || dy) && (r.y < 0 || r.y + r.h > h || r.x < 0 || r.x + r.w > w)) return false;
-        for (const o of 已放) if (撞(r, o)) return false;
-        return true;
+      // 景物（錨點）被時間軸或說明卡蓋住時，標籤跟著淡出，不硬把它推到別處（會變成離景物很遠的浮字）
+      const 被蓋 = 障.some(o => L.sx > o.x && L.sx < o.x + o.w && L.sy > o.y && L.sy < o.y + o.h);
+      if (被蓋 !== !!L.被蓋) { L.被蓋 = 被蓋; L.el.style.opacity = 被蓋 ? "0" : ""; }
+      if (被蓋) { L.el.style.transform = `translate(${L.sx + (L.dx || 0)}px,${L.sy + (L.dy || 0)}px) translate(-50%,-100%)`; continue; }
+      const 寬 = L.寬, 高 = L.高;
+      // 錨點在畫面內時，標籤不要被畫面左右邊緣切掉；錨點出了畫面，修正量隨距離連續淡出（不會在邊界瞬間彈開）
+      let hx = L.sx - 寬 / 2;
+      const hy = L.sy - 高;
+      const 外 = L.sx < 0 ? -L.sx : L.sx > w ? L.sx - w : 0;
+      const 淡 = 外 > 0 ? Math.max(0, 1 - 外 / (寬 / 2)) : 1;
+      const 邊 = (hx < 0 ? -hx : hx + 寬 > w ? w - hx - 寬 : 0) * 淡;
+      hx += 邊; L.sx += 邊;
+      // 原位本來就有一部分在畫面外（錨點在畫面邊緣之外）的標籤不做出界檢查，也不推它（只推原位完整在畫面內的）
+      const 家內 = 界內({ x: hx, y: hy, w: 寬, h: 高 });
+      const 找近 = () => {   // 離原位最近的空位（新出現、或推不開時用）
+        for (let 距 = 6; 距 <= 260; 距 += 6) {
+          for (const [ux, uy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+            const R = { x: hx + ux * 距, y: hy + uy * 距, w: 寬, h: 高 };
+            if ((!家內 || 界內(R)) && !衝(R)) return [ux * 距, uy * 距];
+          }
+        }
+        return null;
       };
-      if (!空(0, 0)) {
-        找: for (let 距 = 6; 距 <= 260; 距 += 6) {
-          for (const [dx, dy] of [[0, -距], [0, 距], [-距, 0], [距, 0]]) if (空(dx, dy)) { 選 = [dx, dy]; break 找; }
+      if (!L.已顯) {
+        // 剛出現：直接擺在最近的空位（淡入中，看不出來），之後只做微調
+        L.dx = 0; L.dy = 0;
+        if (衝({ x: hx, y: hy, w: 寬, h: 高 })) { const 空位 = 找近(); if (空位) { L.dx = 空位[0]; L.dy = 空位[1]; } }
+        L.已顯 = true;
+      } else {
+        // ① 慢慢退回原位：每個方向只在「退一步之後仍離別人夠遠」時才退
+        if (L.dx || L.dy) {
+          for (const 軸 of ["dx", "dy"]) {
+            const d = L[軸];
+            if (!d) continue;
+            const 步 = Math.min(Math.abs(d), 回位速 * dt) * (d > 0 ? -1 : 1);
+            const R = { x: hx + L.dx + (軸 === "dx" ? 步 : 0), y: hy + L.dy + (軸 === "dy" ? 步 : 0), w: 寬, h: 高 };
+            if (!衝(R, 避讓距 + 回位餘裕)) L[軸] = Math.abs(d + 步) < .01 ? 0 : d + 步;
+          }
+        }
+        // ② 被擠到：算出「往上／下／左／右一路推到不碰任何東西」各要多遠，挑最近的方向（不出畫面、不換邊）
+        //    再朝它滑過去，每格最多移動 最快速*dt——小幅度的擠壓當格就推開（不疊），大幅度的用滑的（不瞬移）
+        let R = { x: hx + L.dx, y: hy + L.dy, w: 寬, h: 高 };
+        if (衝(R)) {
+          let 好 = null, 好分 = Infinity;
+          for (const [ux, uy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+            const T = { x: R.x, y: R.y, w: 寬, h: 高 };
+            let 距 = 0;
+            for (let n = 0; n < 14; n++) {
+              const o = 衝(T);
+              if (!o) break;
+              const s = ux > 0 ? o.x + o.w + 避讓距 - T.x : ux < 0 ? T.x + T.w - (o.x - 避讓距) : uy > 0 ? o.y + o.h + 避讓距 - T.y : T.y + T.h - (o.y - 避讓距);
+              T.x += ux * s; T.y += uy * s; 距 += s;
+            }
+            const 離 = Math.hypot(L.dx + ux * 距, L.dy + uy * 距);   // 推完離原位多遠
+            const 分 = 距 + (!家內 || 界內(T) ? 0 : 1e4) + (衝(T) ? 1e3 : 0) + (離 > 最遠離 ? 1e3 : 0) + (ux * L.dx < 0 || uy * L.dy < 0 ? 8 : 0);
+            if (分 < 好分) { 好分 = 分; 好 = [ux * 距, uy * 距]; }
+          }
+          if (好分 >= 1e3) 好 = [0, 0];   // 推不出像樣的位置（太擁擠、太遠、出畫面）：寧可暫時疊著，也不把標籤推到離景物很遠的地方
+          const 長 = Math.hypot(好[0], 好[1]), 最大 = 最快速 * dt, k = 長 > 最大 ? 最大 / 長 : 1;
+          L.dx += 好[0] * k; L.dy += 好[1] * k;
         }
       }
-      // 平滑移動，避免旋轉時標籤一格一格跳；剛出現的直接到位
-      if (!L.已顯) { L.dx = 選[0]; L.dy = 選[1]; L.已顯 = true; }
-      else { L.dx += (選[0] - L.dx) * .3; L.dy += (選[1] - L.dy) * .3; }
-      已放.push({ x: 原.x + 選[0], y: 原.y + 選[1], w: 原.w, h: 原.h });
+      已放.push({ x: hx + L.dx, y: hy + L.dy, w: 寬, h: 高 });
       L.el.style.transform = `translate(${L.sx + L.dx}px,${L.sy + L.dy}px) translate(-50%,-100%)`;
       L.el.style.zIndex = String(1000 - Math.round(L.sz * 900));
     }
@@ -1476,7 +1528,7 @@
     更新補間(dt);
     套鏡頭();
     渲染器.render(場景, 鏡頭);
-    更新標籤();
+    更新標籤(dt);
     if (目前場 && 結束回呼 && 時鐘.場 >= 演出長) { const f = 結束回呼; 結束回呼 = null; f(); }
   };
 
